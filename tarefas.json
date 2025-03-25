@@ -1,0 +1,22 @@
+[
+    {
+        "descricao": "Exercícios de estatística",
+        "tempo_estimado": 1.0,
+        "prioridade": "Média"
+    },
+    {
+        "descricao": "Realizar questionários do AVA",
+        "tempo_estimado": 1.5,
+        "prioridade": "Baixa"
+    },
+    {
+        "descricao": "Discover Rocketseat",
+        "tempo_estimado": 3.0,
+        "prioridade": "Alta"
+    },
+    {
+        "descricao": "PAGAR BOLETO PASSAPORTE",
+        "tempo_estimado": 0.5,
+        "prioridade": "Baixa"
+    }
+]
