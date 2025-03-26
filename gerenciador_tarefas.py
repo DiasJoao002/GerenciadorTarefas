@@ -1,6 +1,7 @@
 # Importação de bibliotecas necessárias
 import os  # Para verificar a existência do arquivo
 import json  # Para salvar as tarefas em formato estruturado
+from datetime import datetime
 
 # Nome do arquivo onde as tarefas serão armazenadas
 arquivo_tarefas = "tarefas.json"
@@ -17,178 +18,174 @@ opcoes_prioridade = ("Alta", "Média", "Baixa")
 
 
 def carregar_tarefas():
-    """
-    Carrega as tarefas salvas no arquivo JSON.
-    Se o arquivo não existir, retorna uma lista vazia.
-    """
-    if not os.path.exists(arquivo_tarefas):  # Verifica se o arquivo existe
-        return []  # Retorna uma lista vazia se o arquivo não existir
-
+    """Carrega as tarefas salvas no arquivo JSON."""
+    if not os.path.exists(arquivo_tarefas):
+        return []
     with open(arquivo_tarefas, "r", encoding="utf-8") as file:
-        return json.load(file)  # Lê o arquivo JSON e retorna a lista de tarefas
+        return json.load(file)
 
 
 def salvar_tarefas(tarefas):
-    """
-    Salva a lista de tarefas no arquivo JSON.
-    """
+    """Salva a lista de tarefas no arquivo JSON."""
     with open(arquivo_tarefas, "w", encoding="utf-8") as file:
-        json.dump(tarefas, file, indent=4, ensure_ascii=False)  # Salva em formato legível
+        json.dump(tarefas, file, indent=4, ensure_ascii=False)
+
+
+def obter_duracao_tarefa():
+    """Solicita ao usuário a duração da tarefa no formato hh:mm."""
+    while True:
+        duracao = input("Insira a duração da tarefa (hh:mm): ")
+        try:
+            horas, minutos = map(int, duracao.split(':'))
+            if minutos < 0 or minutos > 59:
+                raise ValueError
+            return horas, minutos
+        except ValueError:
+            print("⚠️ Formato inválido. Insira a duração no formato hh:mm (ex: 01:30).")
+
+
+def validar_data():
+    """Solicita uma data ao usuário e valida se é futura e no formato correto."""
+    while True:
+        data_inserida = input("Data de conclusão (dd/mm/yyyy): ")
+        try:
+            data_formatada = datetime.strptime(data_inserida, "%d/%m/%Y")
+            if data_formatada < datetime.now():
+                print("🚫 Data inválida. Insira uma data futura.")
+            else:
+                return data_inserida
+        except ValueError:
+            print("⚠️ Formato inválido. Insira a data no formato dd/mm/yyyy.")
 
 
 def adicionar_tarefa():
-    """
-    Permite que o usuário adicione uma nova tarefa com descrição e prioridade.
-    """
-    descricao = input("Digite a nova tarefa: ")  # Solicita a descrição da tarefa
+    """Permite que o usuário adicione uma nova tarefa."""
+    descricao = input("Digite a nova tarefa: ")
 
-    # Definição do tipo de dado 'float' para o tempo estimado
-    while True:
-        user_input = input("Tempo estimado para completar (ex: 1.5 -> 1 hora e 30 min): ")
+    horas, minutos = obter_duracao_tarefa()
+    duracao_total = horas * 60 + minutos
 
-        # Verifica se a entrada está vazia
-        if user_input.strip() == "":
-            print("Por favor, insira um valor válido.")
-            continue  # Repete o loop se a entrada estiver vazia
-
-        try:
-            # Tenta converter a entrada para um float
-            tempo_estimado = float(user_input)
-            break  # Sai do loop se a conversão for bem-sucedida
-        except ValueError:
-            print("Por favor, insira um valor válido.")  # Mensagem de erro se a conversão falhar
-
-    # Agora você pode usar tempo_estimado como um float válido
-    print(f"Tempo estimado: {tempo_estimado} horas")
-
-    # Loop para definir a prioridade da tarefa
     while True:
         prioridade = input("Defina a prioridade (Alta, Média, Baixa): ").capitalize()
-        if prioridade in opcoes_prioridade:  # Verifica se a prioridade é válida
+        if prioridade in opcoes_prioridade:
             break
-        print("Prioridade inválida. Escolha entre: Alta, Média ou Baixa.")
+        print("⚠️ Prioridade inválida. Escolha entre: Alta, Média ou Baixa.")
 
-    tarefas = carregar_tarefas()  # Carrega as tarefas existentes
-    # Dicionário => key : value
+    data_conclusao = validar_data()
+
+    tarefas = carregar_tarefas()
     nova_tarefa = {
         "descricao": descricao,
-        "tempo_estimado": tempo_estimado,
+        "tempo_estimado": duracao_total,
         "prioridade": prioridade,
-        "data_conclusao": data
+        "data_conclusao": data_conclusao
     }
 
-    tarefas.append(nova_tarefa)  # Adiciona a nova tarefa à lista
-    salvar_tarefas(tarefas)  # Salva as tarefas atualizadas no arquivo
+    tarefas.append(nova_tarefa)
+    salvar_tarefas(tarefas)
     print("✅ Tarefa adicionada com sucesso!")
+    print(f'Descrição: {descricao} || Duração: {duracao_total} min || Prioridade: {prioridade} || Data: {data_conclusao}')
 
 
 def listar_tarefas_prioridade():
-    """
-    Lista todas as tarefas salvas no arquivo, ordenadas por prioridade.
-    """
-    tarefas = carregar_tarefas()  # Carrega as tarefas
-
-    if not tarefas:  # Verifica se não há tarefas
+    """Lista todas as tarefas ordenadas por prioridade."""
+    tarefas = carregar_tarefas()
+    if not tarefas:
         print("📂 Nenhuma tarefa encontrada.")
         return
 
-    # Ordenando as tarefas por prioridade usando dicionário de mapeamento
     tarefas_ordenadas = sorted(tarefas, key=lambda x: prioridades[x["prioridade"]], reverse=True)
-
+    
     print("\n📌 Lista de Tarefas (Ordenadas por Prioridade):")
-    for i, tarefa in enumerate(tarefas_ordenadas, 1):  # Enumera as tarefas
-        print(f"{i}. {tarefa['descricao']} - 🕒 {tarefa['tempo_estimado']}h - 🔥 Prioridade: {tarefa['prioridade']}")
+    for i, tarefa in enumerate(tarefas_ordenadas, 1):
+        horas, minutos = divmod(tarefa['tempo_estimado'], 60)
+        print(f"{i}. {tarefa['descricao']} - 🕒 {horas}h {minutos}m - 🔥 {tarefa['prioridade']}")
+
 
 def listar_tarefas_date():
-    tarefas = carregar_tarefas()  # Carrega as tarefas
-
-    if not tarefas: 
-        print("📂 Nenhuma tarefa encontrada")
+    """Lista todas as tarefas ordenadas por data de conclusão."""
+    tarefas = carregar_tarefas()
+    if not tarefas:
+        print("📂 Nenhuma tarefa encontrada.")
         return
+
+    tarefas_ordenadas = sorted(tarefas, key=lambda x: datetime.strptime(x["data_conclusao"], "%d/%m/%Y"))
+    
+    print("\n📌 Lista de Tarefas (Ordenadas por Data):")
+    for i, tarefa in enumerate(tarefas_ordenadas, 1):
+        horas, minutos = divmod(tarefa['tempo_estimado'], 60)
+        print(f"{i}. {tarefa['descricao']} - 🕒 {horas}h {minutos}m - 📅 {tarefa['data_conclusao']}")
+
 
 def remover_tarefa():
-    """
-    Permite que o usuário remova uma tarefa pelo número correspondente.
-    """
-    tarefas = carregar_tarefas()  # Carrega as tarefas
-    listar_tarefas_prioridade()  # Lista as tarefas
+    """Permite que o usuário remova uma tarefa pelo número correspondente."""
+    tarefas = carregar_tarefas()
+    listar_tarefas_prioridade()
 
-    if not tarefas:  # Verifica se não há tarefas
+    if not tarefas:
         return
 
-    try:
-        num_tarefa = int(input("\nDigite o número da tarefa a remover: "))  # Solicita o número da tarefa a ser removida
-        if 1 <= num_tarefa <= len(tarefas):  # Verifica se o número está dentro do intervalo válido
-            tarefa_removida = tarefas.pop(num_tarefa - 1)  # Remove a tarefa selecionada
-            salvar_tarefas(tarefas)  # Atualiza o arquivo com a lista de tarefas
-            print(f"🗑️ Tarefa '{tarefa_removida['descricao']}' removida com sucesso!")  # Confirma a remoção
-        else:
-            print("❌ Número inválido. Tente novamente.")  # Mensagem de erro se o número for inválido
-    except ValueError:
-        print("⚠️ Entrada inválida. Digite um número válido.")  # Mensagem de erro se a entrada não for um número
+    while True:
+        try:
+            num_tarefa = int(input("\nDigite o número da tarefa a remover: "))
+            if 1 <= num_tarefa <= len(tarefas):
+                tarefa_removida = tarefas.pop(num_tarefa - 1)
+                salvar_tarefas(tarefas)
+                print(f"🗑️ Tarefa '{tarefa_removida['descricao']}' removida com sucesso!")
+                break
+            else:
+                print("❌ Número inválido. Tente novamente.")
+        except ValueError:
+            print("⚠️ Entrada inválida. Digite um número válido.")
 
 
 def visualizar_estatisticas():
-    """
-    Exibe estatísticas sobre as tarefas cadastradas.
-    """
-    tarefas = carregar_tarefas()  # Carrega as tarefas
-    if not tarefas:  # Verifica se não há tarefas
-        print("📊 Nenhuma estatística disponível, pois não há tarefas cadastradas.")
+    """Exibe estatísticas sobre as tarefas cadastradas."""
+    tarefas = carregar_tarefas()
+    if not tarefas:
+        print("📊 Nenhuma estatística disponível.")
         return
 
-    total_tarefas = len(tarefas)  # Conta o total de tarefas
-    tempo_total = sum(tarefa["tempo_estimado"] for tarefa in tarefas)  # Soma o tempo estimado de todas as tarefas
-    prioridades_unicas = set(tarefa["prioridade"] for tarefa in tarefas)  # Coleta as prioridades únicas
+    total_tarefas = len(tarefas)
+    tempo_total = sum(tarefa["tempo_estimado"] for tarefa in tarefas)
+    prioridades_unicas = set(tarefa["prioridade"] for tarefa in tarefas)
 
     print("\n📊 Estatísticas das Tarefas:")
-    print(f"📌 Total de tarefas: {total_tarefas}")  # Exibe o total de tarefas
-    print(f"🕒 Tempo total estimado: {tempo_total:.2f} horas")  # Exibe o tempo total estimado
-    print(f"🔥 Prioridades presentes: {', '.join(prioridades_unicas)}")  # Exibe as prioridades únicas
-
-def menu_listagem():
-    while True:
-        print("\n📝 Menu de Listagem de Tarefas:")
-        print("1️⃣ Listar tarefas por prioridade")
-        print("2️⃣ Listar tarefas por data de entrega")
-
-        opcao_prioridade = input("Escolha uma opção: ")
-        if opcao_prioridade == "1":
-            listar_tarefas_prioridade()
-        elif opcao_prioridade == "2":
-            listar_tarefas_date()
-        else: 
-            print("⚠️ Opção inválida. Tente novamente.")  # Mensagem de erro se a opção for inválida
+    print(f"📌 Total de tarefas: {total_tarefas}")
+    print(f"🕒 Tempo total estimado: {tempo_total // 60}h {tempo_total % 60}m")
+    print(f"🔥 Prioridades presentes: {', '.join(prioridades_unicas)}")
 
 
 def menu():
-    """
-    Exibe um menu interativo para o usuário escolher ações.
-    """
+    """Exibe um menu interativo para o usuário."""
     while True:
-        print("\n📌 GERENCIADOR DE TAREFAS")  # Título do menu
-        print("1️⃣ Adicionar Tarefa")  # Opção para adicionar tarefa
-        print("2️⃣ Listar Tarefas")  # Opção para listar tarefas
-        print("3️⃣ Remover Tarefa")  # Opção para remover tarefa
-        print("4️⃣ Visualizar Estatísticas")  # Opção para visualizar estatísticas
-        print("5️⃣ Sair")  # Opção para sair do programa
+        print("\n📌 GERENCIADOR DE TAREFAS")
+        print("1️⃣ Adicionar Tarefa")
+        print("2️⃣ Listar Tarefas por Prioridade")
+        print("3️⃣ Listar Tarefas por Data")
+        print("4️⃣ Remover Tarefa")
+        print("5️⃣ Visualizar Estatísticas")
+        print("6️⃣ Sair")
 
-        opcao = input("Escolha uma opção: ")  # Solicita a escolha do usuário
+        opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            adicionar_tarefa()  # Chama a função para adicionar tarefa
+            adicionar_tarefa()
         elif opcao == "2":
-            menu_listagem()  # Chama a função para listar tarefas
+            listar_tarefas_prioridade()
         elif opcao == "3":
-            remover_tarefa()  # Chama a função para remover tarefa
+            listar_tarefas_date()
         elif opcao == "4":
-            visualizar_estatisticas()  # Chama a função para visualizar estatísticas
+            remover_tarefa()
         elif opcao == "5":
-            print("👋 Saindo do programa...")  # Mensagem de saída
-            break  # Encerra o loop e finaliza o programa
+            visualizar_estatisticas()
+        elif opcao == "6":
+            print("Saindo...")
+            break
         else:
-            print("⚠️ Opção inválida. Tente novamente.")  # Mensagem de erro se a opção for inválida
+            print("⚠️ Opção inválida. Tente novamente.")
 
 
-# Chama a função principal para iniciar o programa
-menu()
+# Inicia o programa
+if __name__ == "__main__":
+    menu()
