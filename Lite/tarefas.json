@@ -1,0 +1,22 @@
+[
+    {
+        "descricao": "Teste de nivelamento",
+        "tempo_estimado": 90,
+        "prioridade": "Média"
+    },
+    {
+        "descricao": "teste",
+        "tempo_estimado": 180,
+        "prioridade": "Média"
+    },
+    {
+        "descricao": "NP1",
+        "tempo_estimado": 90,
+        "prioridade": "Alta"
+    },
+    {
+        "descricao": "Trabalho interdisciplinar",
+        "tempo_estimado": 90,
+        "prioridade": "Média"
+    }
+]
