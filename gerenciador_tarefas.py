@@ -131,7 +131,7 @@ def remover_tarefa():
             if 1 <= num_tarefa <= len(tarefas):
                 tarefa_removida = tarefas.pop(num_tarefa - 1)
                 salvar_tarefas(tarefas)
-                print(f"🗑️ Tarefa {tarefa_removida['descricao']} removida com sucesso!")
+                print(f"🗑️ Tarefa '{tarefa_removida['descricao']}' removida com sucesso!")
                 break
             else:
                 print("❌ Número inválido. Tente novamente.")
@@ -187,4 +187,5 @@ def menu():
 
 
 # Inicia o programa
-menu()
+if __name__ == "__main__":
+    menu()
